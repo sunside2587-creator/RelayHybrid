@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandi IoT Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass-card {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .status-dot {
+            height: 8px;
+            width: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+
+<body class="antialiased text-gray-800 p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Smart Monitoring</h1>
+                <p class="text-slate-500"><span class="status-dot"></span> Sistem Aktif - Sandi IoT V2</p>
+            </div>
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
+                <i class="fa-solid fa-calendar-day text-blue-500 mr-2"></i>
+                <span id="date-now" class="font-medium text-sm text-gray-600"></span>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+            <div class="glass-card shadow-xl border border-white overflow-hidden">
+                <div
+                    class="bg-blue-600 p-4 text-white flex justify-between uppercase text-sm font-bold italic tracking-wider">
+                    <span>Living Room</span> <i class="fa-solid fa-house-signal"></i>
+                </div>
+                <div class="p-8 grid grid-cols-2 gap-4">
+                    <div class="border-r border-gray-100">
+                        <p class="text-xs font-bold text-gray-400 uppercase">Temp</p>
+                        <div class="flex items-baseline"><span id="suhu1"
+                                class="text-5xl font-black text-blue-600">0</span><span
+                                class="text-xl font-bold text-blue-400 ml-1">°C</span></div>
+                    </div>
+                    <div class="pl-4">
+                        <p class="text-xs font-bold text-gray-400 uppercase">Hum</p>
+                        <div class="flex items-baseline"><span id="hum1"
+                                class="text-5xl font-black text-emerald-500">0</span><span
+                                class="text-xl font-bold text-emerald-300 ml-1">%</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card shadow-xl border border-white overflow-hidden">
+                <div
+                    class="bg-rose-600 p-4 text-white flex justify-between uppercase text-sm font-bold italic tracking-wider">
+                    <span>Server Room</span> <i class="fa-solid fa-server"></i>
+                </div>
+                <div class="p-8 grid grid-cols-2 gap-4">
+                    <div class="border-r border-gray-100">
+                        <p class="text-xs font-bold text-gray-400 uppercase">Temp</p>
+                        <div class="flex items-baseline"><span id="suhu2"
+                                class="text-5xl font-black text-rose-600">0</span><span
+                                class="text-xl font-bold text-rose-400 ml-1">°C</span></div>
+                    </div>
+                    <div class="pl-4">
+                        <p class="text-xs font-bold text-gray-400 uppercase">Hum</p>
+                        <div class="flex items-baseline"><span id="hum2"
+                                class="text-5xl font-black text-amber-500">0</span><span
+                                class="text-xl font-bold text-amber-300 ml-1">%</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card shadow-xl p-6 mb-8 border border-white">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fa-solid fa-chart-line text-blue-500 mr-2"></i> Grafik Suhu Real-time
+            </h3>
+            <div class="h-64">
+                <canvas id="tempChart"></canvas>
+            </div>
+        </div>
+
+        <div class="glass-card shadow-2xl p-8 border border-white">
+            <h3 class="text-xl font-bold text-gray-800 mb-8 flex items-center">
+                <div class="bg-yellow-100 p-2 rounded-lg mr-3 text-yellow-600"><i
+                        class="fa-solid fa-bolt-lightning"></i></div>
+                Relay Controller
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-center">
+                    <p class="font-bold text-gray-700 mb-4 uppercase text-xs">Light A (Relay 1)</p>
+                    <div class="flex rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                        <button onclick="sendRelay('ON1')"
+                            class="flex-1 py-3 bg-white hover:bg-green-500 hover:text-white font-bold transition-all border-r">ON</button>
+                        <button onclick="sendRelay('OFF1')"
+                            class="flex-1 py-3 bg-white hover:bg-rose-500 hover:text-white font-bold transition-all">OFF</button>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-center">
+                    <p class="font-bold text-gray-700 mb-4 uppercase text-xs">Fan B (Relay 2)</p>
+                    <div class="flex rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                        <button onclick="sendRelay('ON2')"
+                            class="flex-1 py-3 bg-white hover:bg-green-500 hover:text-white font-bold transition-all border-r">ON</button>
+                        <button onclick="sendRelay('OFF2')"
+                            class="flex-1 py-3 bg-white hover:bg-rose-500 hover:text-white font-bold transition-all">OFF</button>
+                    </div>
+                </div>
+                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-center">
+                    <p class="font-bold text-gray-700 mb-4 uppercase text-xs">Pump C (Relay 3)</p>
+                    <div class="flex rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                        <button onclick="sendRelay('ON3')"
+                            class="flex-1 py-3 bg-white hover:bg-green-500 hover:text-white font-bold transition-all border-r">ON</button>
+                        <button onclick="sendRelay('OFF3')"
+                            class="flex-1 py-3 bg-white hover:bg-rose-500 hover:text-white font-bold transition-all">OFF</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Automation Settings -->
+        <div class="glass-card shadow-2xl p-8 border border-white mt-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-8 flex items-center">
+                <div class="bg-indigo-100 p-2 rounded-lg mr-3 text-indigo-600"><i class="fa-solid fa-robot"></i></div>
+                Automation Settings
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Toggle and Time/Temp -->
+                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                    <div class="flex items-center justify-between mb-6">
+                        <span class="font-bold text-gray-700">Enable Auto Mode</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="auto_enabled" class="sr-only peer" onchange="saveAutoConfig()">
+                            <div
+                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600">
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Target Temperature (°C)</label>
+                        <input type="number" id="temp_threshold"
+                            class="w-full rounded-lg border-gray-300 border p-2 text-gray-700" value="30"
+                            onchange="saveAutoConfig()">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Start Time</label>
+                            <input type="time" id="time_start"
+                                class="w-full rounded-lg border-gray-300 border p-2 text-gray-700" value="08:00"
+                                onchange="saveAutoConfig()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">End Time</label>
+                            <input type="time" id="time_end"
+                                class="w-full rounded-lg border-gray-300 border p-2 text-gray-700" value="17:00"
+                                onchange="saveAutoConfig()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Select Relays -->
+                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100">
+                    <p class="font-bold text-gray-700 mb-4">Relays to Automate</p>
+                    <div class="space-y-4">
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="relay_auto_1"
+                                class="form-checkbox h-5 w-5 text-indigo-600 rounded border-gray-300"
+                                onchange="saveAutoConfig()">
+                            <span class="text-gray-700 font-medium">Light A (Relay 1)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="relay_auto_2"
+                                class="form-checkbox h-5 w-5 text-indigo-600 rounded border-gray-300"
+                                onchange="saveAutoConfig()">
+                            <span class="text-gray-700 font-medium">Fan B (Relay 2)</span>
+                        </label>
+                        <label class="flex items-center space-x-3 cursor-pointer">
+                            <input type="checkbox" id="relay_auto_3"
+                                class="form-checkbox h-5 w-5 text-indigo-600 rounded border-gray-300"
+                                onchange="saveAutoConfig()">
+                            <span class="text-gray-700 font-medium">Pump C (Relay 3)</span>
+                        </label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-4 italic">Selected relays will turn ON when temperature >= target
+                        AND time is within the schedule. Otherwise, they will turn OFF.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Inisialisasi Chart
+        const ctx = document.getElementById('tempChart').getContext('2d');
+        const tempChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Living Room', data: [], borderColor: '#2563eb', tension: 0.4, fill: false },
+                    { label: 'Server Room', data: [], borderColor: '#e11d48', tension: 0.4, fill: false }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: false } },
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+
+        // 2. Fungsi Ambil Data Real-time (JSON)
+        function fetchUpdates() {
+            fetch('/api/data')
+                .then(res => res.json())
+                .then(data => {
+                    // Update angka
+                    document.getElementById('suhu1').innerText = data.current.suhu1;
+                    document.getElementById('hum1').innerText = data.current.hum1;
+                    document.getElementById('suhu2').innerText = data.current.suhu2;
+                    document.getElementById('hum2').innerText = data.current.hum2;
+
+                    // Update grafik
+                    tempChart.data.labels = data.history.labels;
+                    tempChart.data.datasets[0].data = data.history.suhu1;
+                    tempChart.data.datasets[1].data = data.history.suhu2;
+                    tempChart.update('none'); // Update tanpa animasi refresh agar mulus
+                });
+        }
+
+        // 3. Kontrol Relay
+        function sendRelay(state) {
+            const fd = new FormData(); fd.append('state', state);
+            fetch('/relay', { method: 'POST', body: fd });
+        }
+
+        // 4. Auto Config
+        function fetchAutoConfig() {
+            fetch('/api/auto_config')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('auto_enabled').checked = data.auto_enabled;
+                    document.getElementById('temp_threshold').value = data.temp_threshold;
+                    document.getElementById('time_start').value = data.time_start;
+                    document.getElementById('time_end').value = data.time_end;
+                    document.getElementById('relay_auto_1').checked = data.relay_auto_1;
+                    document.getElementById('relay_auto_2').checked = data.relay_auto_2;
+                    document.getElementById('relay_auto_3').checked = data.relay_auto_3;
+                })
+                .catch(err => console.error("Error loading auto config:", err));
+        }
+
+        function saveAutoConfig() {
+            const config = {
+                auto_enabled: document.getElementById('auto_enabled').checked,
+                temp_threshold: parseFloat(document.getElementById('temp_threshold').value),
+                time_start: document.getElementById('time_start').value,
+                time_end: document.getElementById('time_end').value,
+                relay_auto_1: document.getElementById('relay_auto_1').checked,
+                relay_auto_2: document.getElementById('relay_auto_2').checked,
+                relay_auto_3: document.getElementById('relay_auto_3').checked
+            };
+
+            fetch('/api/auto_config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            });
+        }
+
+        fetchAutoConfig();
+
+        setInterval(fetchUpdates, 2000);
+        document.getElementById('date-now').innerText = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    </script>
+</body>
+
+</html>
